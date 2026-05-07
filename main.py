@@ -35,7 +35,7 @@ BUCKET_NAME = "shopify-uploads"
 
 PUSHOVER_USER_KEY = "u32fvw3vfvn3jr3hdk2oim2az2swfz"
 
-PUSHOVER_API_TOKEN = "aru9oadozx3sod7mie6onuj16cij"
+PUSHOVER_API_TOKEN = "aru9oadozx3sod7mie6onuj16cij59"
 
 # =========================================
 # R2 CLIENT
