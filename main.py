@@ -1,7 +1,6 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import boto3
-import uuid
 import os
 
 app = FastAPI()
@@ -29,31 +28,49 @@ s3 = boto3.client(
     region_name="auto"
 )
 
+@app.get("/")
+async def root():
+    return {"status": "Backend running"}
+
 @app.post("/upload")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_files(
+    order_id: str = Form(...),
+    files: list[UploadFile] = File(...)
+):
 
-    contents = await file.read()
+    uploaded_files = []
 
-    # Max 10MB
-    if len(contents) > 10_000_000:
-        return {"error": "File too large"}
+    for file in files:
 
-    # Images only
-    if not file.content_type.startswith("image/"):
-        return {"error": "Images only"}
+        contents = await file.read()
 
-    filename = f"{uuid.uuid4()}-{file.filename}"
+        # Max 10MB
+        if len(contents) > 10_000_000:
+            continue
 
-    s3.put_object(
-        Bucket=BUCKET_NAME,
-        Key=filename,
-        Body=contents,
-        ContentType=file.content_type
-    )
+        # Images only
+        if not file.content_type.startswith("image/"):
+            continue
 
-    file_url = f"{PUBLIC_URL}/{filename}"
+        filename = f"{order_id}/{file.filename}"
+
+        s3.put_object(
+            Bucket=BUCKET_NAME,
+            Key=filename,
+            Body=contents,
+            ContentType=file.content_type
+        )
+
+        file_url = f"{PUBLIC_URL}/{filename}"
+
+        print(f"UPLOAD SUCCESS: {filename}")
+
+        uploaded_files.append({
+            "filename": filename,
+            "url": file_url
+        })
 
     return {
         "success": True,
-        "url": file_url
+        "uploaded": uploaded_files
     }
